@@ -30,6 +30,9 @@ public class IgnoreManager {
 
   private var baseDirectoryCache: [URL: URL] = [:]
 
+  /// Cache for directory traversal decisions to avoid expensive file system scans.
+  private var traversalCache: [URL: Bool] = [:]
+
   /// Initialize a new IgnoreManager
   public init() {}
 
@@ -221,6 +224,53 @@ public class IgnoreManager {
 
     // Target is not under base, return nil
     return nil
+  }
+
+  /// Determines if a directory should be traversed even if it's ignored.
+  ///
+  /// This is crucial for gitignore semantics: we must traverse ignored directories
+  /// if they contain nested .swift-format-ignore files (at any depth) that might
+  /// contain negation patterns.
+  ///
+  /// - Parameter directory: The directory URL to check for traversal.
+  /// - Returns: `true` if the directory should be traversed despite being ignored.
+  package func shouldTraverseIgnoredDirectory(_ directory: URL) -> Bool {
+    let cacheKey = directory.standardizedFileURL
+
+    // Check cache first
+    if let cached = traversalCache[cacheKey] {
+      return cached
+    }
+
+    // Search recursively for any nested .swift-format-ignore files
+    let shouldTraverse = hasNestedIgnoreFiles(in: directory)
+
+    // Cache the result
+    traversalCache[cacheKey] = shouldTraverse
+
+    return shouldTraverse
+  }
+
+  /// Recursively searches for .swift-format-ignore files within a directory.
+  ///
+  /// - Parameter directory: The directory to search within.
+  /// - Returns: `true` if any .swift-format-ignore file is found at any depth.
+  private func hasNestedIgnoreFiles(in directory: URL) -> Bool {
+    guard let enumerator = FileManager.default.enumerator(
+      at: directory,
+      includingPropertiesForKeys: [.isRegularFileKey],
+      options: [.skipsHiddenFiles]
+    ) else {
+      return false
+    }
+
+    for case let fileURL as URL in enumerator {
+      if fileURL.lastPathComponent == ".swift-format-ignore" {
+        return true
+      }
+    }
+
+    return false
   }
 
 }

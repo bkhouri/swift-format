@@ -109,7 +109,10 @@ public struct FileIterator: Sequence, IteratorProtocol {
 
         case .typeDirectory:
           if self.ignoreManager.shouldIgnore(file: next, isDirectory: true) {
-            continue
+            // Even if directory is ignored, we must traverse it if it contains nested ignore files
+            if !self.ignoreManager.shouldTraverseIgnoredDirectory(next) {
+              continue
+            }
           }
           dirIterator = FileManager.default.enumerator(
             at: next,
