@@ -208,14 +208,19 @@ public class IgnoreManager {
       let remainingPath = String(targetPath.dropFirst(prefixLength))
 
       // Remove leading slash if present
+      let relativePath: String
       if remainingPath.hasPrefix("/") {
-        return String(remainingPath.dropFirst())
+        relativePath = String(remainingPath.dropFirst())
       } else {
-        return remainingPath
+        relativePath = remainingPath
       }
+
+      // Normalize path separators for consistent pattern matching
+      return normalizePath(relativePath)
     }
 
     // Target is not under base, return nil
     return nil
   }
+
 }

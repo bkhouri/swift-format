@@ -300,12 +300,3 @@ struct FileIteratorIgnoreTests {
     }
   }
 }
-
-// MARK: - Helper Methods
-
-private func withTempDirectory<T>(_ body: (URL) throws -> T) throws -> T {
-  let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-  try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-  defer { try? FileManager.default.removeItem(at: tempDir) }
-  return try body(tempDir)
-}
