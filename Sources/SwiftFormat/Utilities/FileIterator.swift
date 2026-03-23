@@ -187,7 +187,10 @@ public struct FileIterator: Sequence, IteratorProtocol {
         )
 
         // Apply ignore filtering
-        if self.ignoreManager.shouldIgnore(file: item, isDirectory: false) {
+        let shouldIgnoreFile = self.ignoreManager.shouldIgnore(file: item, isDirectory: false)
+        // print("DEBUG FileIterator: File '\(item.path)' shouldIgnore=\(shouldIgnoreFile)")
+
+        if shouldIgnoreFile {
           output = nil
           continue  // Skip this file and continue to next
         }
